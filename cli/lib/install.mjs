@@ -245,8 +245,8 @@ const SKILL_LINES = {
 
 export const SKILL_NAMES = Object.keys(SKILL_LINES)
 
-// Names the skills rather than importing the core: an `@` import pulls all 46 KB
-// of it into every session, including ones that touch no UI.
+// Names the skills rather than importing the core, which an `@` import would pull
+// into every session, including ones that touch no UI.
 function pointerBlock(skills) {
   return [
     POINTER_START,

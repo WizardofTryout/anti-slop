@@ -12,7 +12,7 @@ The report notes that antislop appends a pointer block to an agent entry file su
 
 - is a static markdown reference. It lists the installed skills and carries no executable content.
 - is written only after you approve. The installer and the manual wizard both ask first.
-- is added at the end of the entry file on a first install, and replaced in place on later runs. Nothing else in the file is touched: your prose, blank lines, code blocks, and line endings are left as they are, and the only lines it ever removes are antislop's own marker comments.
+- is added at the end of the entry file on a first install, and replaced in place on later runs. Nothing else in the file is rewritten: your prose and code blocks are left alone, the line ending is the one the file already uses, and the only tidying is the blank lines at the seam where the block joins. On a later run the only lines removed are its own, the two markers and the block between them.
 - lives in [cli/lib/install.mjs](cli/lib/install.mjs) for the installer, and in the wizard inside [antislop.md](antislop.md) for the manual path.
 
 Removing this behavior would remove the core promise: a filter that is always on, not one you remember to invoke. Any always-on ruleset that writes a reference to an entry file matches this pattern.

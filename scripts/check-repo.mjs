@@ -8,6 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { buildIndex, START, END } from './skill-index.mjs'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8')
@@ -34,10 +35,20 @@ const MANIFESTS = [
   'cli/package.json',
 ]
 
+/** The community files GitHub reads. Held to the rules the documents above already follow. */
+const COMMUNITY = [
+  'CONTRIBUTING.md',
+  'CODE_OF_CONDUCT.md',
+  '.github/PULL_REQUEST_TEMPLATE.md',
+  '.github/ISSUE_TEMPLATE/bug_report.yml',
+  '.github/ISSUE_TEMPLATE/rule_gap.yml',
+  '.github/ISSUE_TEMPLATE/config.yml',
+]
+
 /** R-02's carve-out, encoded so a new em dash in ordinary prose still fails. */
 function emDashes() {
   const bad = []
-  const files = ['antislop.md', 'README.md', 'GUIDE.md', 'ROADMAP.md', 'SECURITY.md', ...SKILLS]
+  const files = ['antislop.md', 'README.md', 'GUIDE.md', 'ROADMAP.md', 'SECURITY.md', ...COMMUNITY, ...SKILLS]
 
   for (const file of files) {
     let section = ''
@@ -91,7 +102,7 @@ function skillReferences() {
   return bad
 }
 
-/** The version is hand-written in ten places. They have to agree. */
+/** The version is hand-written in every manifest and stamp. They have to agree. */
 function versions() {
   // A malformed file is already reported by the manifest check; do not crash here.
   const json = (p) => {
@@ -105,6 +116,9 @@ function versions() {
   if (!want) return ['cli/package.json has no readable version']
 
   const found = [
+    // The lock file carries the version twice, and npm ci will not correct a stale one.
+    ['cli/package-lock.json', json('cli/package-lock.json')?.version],
+    ['cli/package-lock.json (packages "")', json('cli/package-lock.json')?.packages?.['']?.version],
     // The Cline plugin manifest and, from v3.2.17, the Pi package. Same release.
     ['package.json', json('package.json')?.version],
     ['.claude-plugin/plugin.json', json('.claude-plugin/plugin.json')?.version],
@@ -117,6 +131,8 @@ function versions() {
     ['skills/antislop/VERSION', read('skills/antislop/VERSION').trim()],
     ['cli/lib/banner.mjs', read('cli/lib/banner.mjs').match(/installer v(\d+\.\d+\.\d+)/)?.[1]],
     ['skills/antislop-human/contrast-mcp.py', read('skills/antislop-human/contrast-mcp.py').match(/SERVER_VERSION = "(\d+\.\d+\.\d+)"/)?.[1]],
+    // The contributors image is cached per URL, so a changed version is what makes it redraw.
+    ['README.md (contributors image)', read('README.md').match(/contrib\.rocks\/image\?repo=[^"'&\s]+&v=(\d+\.\d+\.\d+)/)?.[1]],
   ]
 
   return found
@@ -219,6 +235,10 @@ function manifestPaths() {
       const target = m[1].replace(/^\.\//, '')
       if (!existsExactly(target)) bad.push(`${file} points at ${m[1]}, which does not exist`)
     }
+    // A plugin-root path is absolute only once the agent expands it, so check the tail.
+    for (const m of text.matchAll(/"\$\{CLAUDE_PLUGIN_ROOT\}\/([^"]+)"/g)) {
+      if (!existsExactly(m[1])) bad.push(`${file} points at \${CLAUDE_PLUGIN_ROOT}/${m[1]}, which does not exist`)
+    }
   }
   return bad
 }
@@ -231,13 +251,57 @@ const existsExactly = (target) => {
   return fs.readdirSync(dir).includes(path.basename(full))
 }
 
+/** GitHub's anchor rule: lowercase, drop punctuation, spaces to hyphens, duplicates numbered. */
+function anchorsIn(text) {
+  const taken = new Map()
+  const out = new Set()
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/^#{1,6}\s+(.+?)\s*#*\s*$/)
+    if (!m) continue
+    const base = m[1].toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s+/g, '-')
+    const seen = taken.get(base) ?? 0
+    taken.set(base, seen + 1)
+    out.add(seen === 0 ? base : `${base}-${seen}`)
+  }
+  return out
+}
+
 function docLinks() {
   const bad = []
-  for (const file of ['README.md', 'GUIDE.md', 'ROADMAP.md', 'SECURITY.md']) {
-    for (const m of read(file).matchAll(/\]\(([^)\s]+)\)/g)) {
-      const target = m[1].split('#')[0]
-      if (!target || /^(https?:|mailto:)/.test(target)) continue
-      if (!existsExactly(target)) bad.push(`${file} links to ${target}, which does not exist`)
+  for (const file of ['README.md', 'GUIDE.md', 'ROADMAP.md', 'SECURITY.md', ...COMMUNITY]) {
+    // Markdown links, plus the raw HTML images and badges the README is built from.
+    for (const m of read(file).matchAll(/\]\(([^)\s]+)\)|(?:src|href)="([^"]+)"/g)) {
+      const [target, anchor] = (m[1] ?? m[2]).split('#')
+      if (/^(https?:|mailto:)/.test(target)) continue
+      // Every table of contents is a list of these, and a renamed heading breaks one silently.
+      if (!target) {
+        if (anchor && !anchorsIn(read(file)).has(anchor)) {
+          bad.push(`${file} links to #${anchor}, which is not a heading in it`)
+        }
+        continue
+      }
+      if (!existsExactly(target)) {
+        bad.push(`${file} links to ${target}, which does not exist`)
+        continue
+      }
+      if (anchor && target.endsWith('.md') && !anchorsIn(read(target)).has(anchor)) {
+        bad.push(`${file} links to ${target}#${anchor}, which is not a heading in it`)
+      }
+    }
+  }
+  return bad
+}
+
+/** A YAML file that routes people by URL rots the same way a markdown link does. */
+function repoUrls() {
+  const bad = []
+  const prefix = 'https://github.com/miqdadbadjuber/anti-slop/blob/main/'
+  for (const file of COMMUNITY) {
+    for (const m of read(file).matchAll(/url:\s*(\S+)/g)) {
+      // A URL that leaves this repository is not this check's to resolve.
+      if (!m[1].startsWith(prefix)) continue
+      const target = m[1].slice(prefix.length)
+      if (!existsExactly(target)) bad.push(`${file} points at ${target}, which does not exist`)
     }
   }
   return bad
@@ -258,6 +322,26 @@ function contrastTwins() {
   return bad
 }
 
+/** The guide carries a generated catalogue, so a skill that adds a pattern cannot leave it behind. */
+function skillIndex() {
+  const guide = read('GUIDE.md').replace(/\r\n/g, '\n')
+  const from = guide.indexOf(START)
+  const to = guide.indexOf(END)
+  if (from === -1 || to === -1) return [`GUIDE.md has no ${START} ... ${END} pair`]
+
+  let generated
+  try {
+    generated = buildIndex()
+  } catch (e) {
+    return [e.message]
+  }
+  const shipped = guide.slice(from + START.length, to).replace(/^\n+|\n+$/g, '')
+  if (shipped !== generated.replace(/\n+$/, '')) {
+    return ['the skill catalogue in GUIDE.md is stale: run node scripts/skill-index.mjs']
+  }
+  return []
+}
+
 const CHECKS = [
   // Manifests first: the later checks read them as data.
   ['every manifest is valid JSON', manifests],
@@ -270,7 +354,9 @@ const CHECKS = [
   ['each rule sits in the gate block its tier implies', tiers],
   ['every manifest path resolves', manifestPaths],
   ['every doc link resolves', docLinks],
+  ['every URL in a community file resolves', repoUrls],
   ['both contrast implementations use the same formula', contrastTwins],
+  ['the skill index in the guide is current', skillIndex],
 ]
 
 let failed = 0
