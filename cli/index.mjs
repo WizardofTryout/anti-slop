@@ -51,8 +51,15 @@ function printPluginDoors(found) {
 }
 
 async function main() {
+  // A mistyped mode is a user error, so it gets one line like the terminal guard below
+  // rather than the stack trace the top-level catch would print.
   if (process.argv[2] === '--mode') {
-    console.log(configureMode(process.argv.slice(3)))
+    try {
+      console.log(configureMode(process.argv.slice(3)))
+    } catch (error) {
+      console.error(`antislop: ${error.message}`)
+      process.exit(1)
+    }
     return
   }
   if (process.argv.includes('--version') || process.argv.includes('-v')) {

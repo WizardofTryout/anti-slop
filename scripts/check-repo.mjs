@@ -48,7 +48,18 @@ const COMMUNITY = [
 /** R-02's carve-out, encoded so a new em dash in ordinary prose still fails. */
 function emDashes() {
   const bad = []
-  const files = ['antislop.md', 'README.md', 'GUIDE.md', 'ROADMAP.md', 'SECURITY.md', ...COMMUNITY, ...SKILLS]
+  // The rules/ pointers ship to plugin users, so the ban covers them like any other doc.
+  const files = [
+    'antislop.md',
+    'README.md',
+    'GUIDE.md',
+    'ROADMAP.md',
+    'SECURITY.md',
+    'rules/antislop.md',
+    'rules/antislop.mdc',
+    ...COMMUNITY,
+    ...SKILLS,
+  ]
 
   for (const file of files) {
     let section = ''

@@ -35,9 +35,9 @@ A finding noted that antislop reads `DESIGN.md` for design direction. The core n
 
 - It never downloads or runs code from the network.
 - It never reads, sends, or logs credentials or private data.
-- It changes files only with your approval, and only to add its own pointer block.
+- It changes files only when you run a command that does, and only where you pointed it: the installer copies the skill folders you chose into the agent folder you picked, and on a project install adds a pointer block to the entry files of the agents you picked, the wizard adds only that pointer block, and `npx antislop-ai --mode during` (or `after`, or `ask`) writes your saved usage mode to a settings file under your home directory. Nothing else in your project or your home directory is touched.
 - It is fully open source. Read the skills, the installer, and the checker before you install.
 
 ## Verdicts that cleared
 
-Socket previously warned on an install command that the wizard named. The wizard no longer names any install command or repo path, and Socket now passes.
+Socket previously warned on an install command that the wizard's install steps named. Those steps no longer name one: a missing skill is reported and left to the user to fetch from the matching release. Socket now passes.

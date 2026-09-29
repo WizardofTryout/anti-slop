@@ -42,8 +42,9 @@ export const AGENTS = [
   { id: 'gemini', label: 'Gemini CLI', dir: '.gemini/skills', entry: 'GEMINI.md' },
   // Hermes reads a project's .hermes/skills and .agents/skills, project tier first.
   { id: 'hermes', label: 'Hermes', dir: '.hermes/skills', readsAlso: ['.agents/skills'], entry: 'AGENTS.md' },
-  // Copilot reads the shared .agents/skills folder, so it shares Antigravity's target.
-  { id: 'copilot', label: 'GitHub Copilot', dir: '.agents/skills', entry: 'AGENTS.md' },
+  // Copilot reads the shared .agents/skills folder, so it shares Antigravity's target,
+  // and .claude/skills beside it, which is where a Claude Code install lands.
+  { id: 'copilot', label: 'GitHub Copilot', dir: '.agents/skills', readsAlso: ['.claude/skills'], entry: 'AGENTS.md' },
   // Kimi Code reads the shared folder at both scopes. Its own .kimi-code/skills is never
   // written here, and $KIMI_CODE_HOME/skills moves with an env var the installer cannot see.
   { id: 'kimi', label: 'Kimi Code', dir: '.agents/skills', entry: 'AGENTS.md' },
@@ -83,7 +84,7 @@ export function resolveTargets(location, selected = AGENTS.map((a) => a.id)) {
   return [...byPath.values()]
 }
 
-// Six rows read more than one project folder, so installing into two of them puts the
+// Seven rows read more than one project folder, so installing into two of them puts the
 // same names in both. Only Pi settles which copy wins, so name it either way.
 export function detectDuplicateReads({ targets, location }) {
   if (location !== 'project') return []

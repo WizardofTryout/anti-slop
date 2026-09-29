@@ -55,7 +55,7 @@ If no antislop pointer exists and this file is being read for the first time, ru
 
 Notes:
 - The entry file is read at the start of a session, so a newly written pointer takes effect from the **next** session.
-- The wizard needs file-write access for step 5 (the pointer block), and nothing else; the user approves once. It never needs network access.
+- The wizard needs file-write access for step 5 (the pointer block) and nothing else to install; the user approves once. A `DESIGN.md` in step 3 and an audit report in Mode 2 are written separately, only when the work calls for them. It never needs network access.
 - The pointer block is the source of truth for which skills are installed. To add or remove a skill later, update the block to match (add or remove the file and its line).
 
 ### Already installed, and the user asks how to update

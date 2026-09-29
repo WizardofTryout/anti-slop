@@ -58,8 +58,9 @@ if (cliDeps) {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  if (invalidMode.status !== 1 || !/Usage: antislop-ai --mode/.test(invalidMode.stderr)) {
-    reasons.push('mode command did not validate its argument before the terminal guard')
+  const cleanError = /^antislop: /.test(invalidMode.stderr) && !/\n\s+at /.test(invalidMode.stderr)
+  if (invalidMode.status !== 1 || !/Usage: antislop-ai --mode/.test(invalidMode.stderr) || !cleanError) {
+    reasons.push('the mode command must exit 1 on one clean line, not a stack trace')
   }
   const noTty = spawnSync(process.execPath, [path.join(__dirname, '..', 'index.mjs')], {
     cwd: tmp,

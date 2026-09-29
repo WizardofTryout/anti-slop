@@ -30,7 +30,13 @@ export function configureMode(args, file = settingsPath) {
   if (args.length > 1 || (args.length === 1 && !modes.includes(args[0]))) {
     throw new Error('Usage: antislop-ai --mode [during|after|ask]')
   }
-  const settings = readSettings(file)
+  let settings
+  try {
+    settings = readSettings(file)
+  } catch (error) {
+    // A file we cannot parse is never overwritten, so the message is the only way out.
+    throw new Error(`${error.message} Fix or delete it to start over.`)
+  }
   if (args.length) {
     settings.mode = args[0]
     fs.mkdirSync(path.dirname(file), { recursive: true })

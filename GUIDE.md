@@ -33,6 +33,7 @@ This guide goes from zero to installed. Every route below carries its own update
   - [antislop-code](#antislop-code)
 - [Reference](#reference)
   - [Which version do I have?](#which-version-do-i-have)
+  - [Usage modes](#usage-modes)
   - [Where each agent reads antislop from](#where-each-agent-reads-antislop-from)
   - [What is a skill?](#what-is-a-skill)
   - [What antislop does not do](#what-antislop-does-not-do)
@@ -184,7 +185,7 @@ npx antislop-ai
 Answer the questions exactly as you did the first time. When it reaches folders you already have, it prints what it found before asking anything:
 
 ```
-▲ Already here: antislop 3.2.10. This installer carries 3.2.13.
+▲ Already here: antislop 3.2.19. This installer carries 3.2.20.
 ```
 
 Then it asks one extra question:
@@ -524,7 +525,7 @@ Use this when you have no terminal, or when your AI is a chat window you cannot 
 
    If you pasted the contents instead of giving the file, say: "Follow the install instructions I pasted. I want the UI and copywriting skill." The AI follows the instructions and sets antislop up. Say "core only" to skip skills.
 
-3. Answer the wizard's questions. It confirms which skills you want and asks when antislop should apply: while the AI is working (during), or after the work is done, to check it (after). Pick "during" for new work. With no saved preference, the agent keeps asking in every new session. To opt out, run `npx antislop-ai --mode during` (or `after`); `--mode ask` restores the question and `--mode` alone shows the setting. The shared setting lives in `~/.config/antislop/settings.json` on Linux and macOS, and `%APPDATA%\antislop\settings.json` on Windows, falling back to `~/.config` if `%APPDATA%` is unset. The skill announces the active mode and its source; an explicit mode requested in chat overrides the saved preference for that session.
+3. Answer the wizard's questions. It confirms which skills you want and asks when antislop should apply: while the AI is working (during), or after the work is done, to check it (after). Pick "during" for new work. With no saved preference, the agent keeps asking in every new session. To opt out, run `npx antislop-ai --mode during` (or `after`) if you have a terminal; `--mode ask` restores the question and `--mode` alone shows the setting. The shared setting lives in `~/.config/antislop/settings.json` on Linux and macOS, and `%APPDATA%\antislop\settings.json` on Windows, falling back to `~/.config` if `%APPDATA%` is unset. The skill announces the active mode and its source; an explicit mode requested in chat overrides the saved preference for that session.
 
 #### Update
 
@@ -540,7 +541,7 @@ Delete the `antislop.md` file you downloaded. If you attached it to a chat proje
 
 The installer, the skills directory, and the plugin doors all need a terminal, so none of them runs on a phone. Updating and removing are the same as [The single file](#the-single-file).
 
-- Claude Projects, ChatGPT Projects, and Gemini Gems all accept a file as reference material, and all three work on a phone. Download `antislop.md`, attach it to the project, and add a short instruction telling the AI to follow it. This is the simplest route and the one to try first. A 50 KB file is far below every limit these products publish.
+- Claude Projects, ChatGPT Projects, and Gemini Gems all accept a file as reference material, and all three work on a phone. Download `antislop.md`, attach it to the project, and add a short instruction telling the AI to follow it. This is the simplest route and the one to try first. A file this size is far below every limit these products publish.
 - Claude Skills is the second option, and the one that behaves most like a real install. Claude can take antislop as a skill, and skills run in the Claude apps. The upload screen is on the web, so do this part at a computer: turn on code execution under Settings and Capabilities, then go to Customize and add a skill. Each antislop skill is a folder holding a `SKILL.md`, so zip the folder with the folder itself at the top level and upload that. Upload the core (`antislop`) as well, because the other skills reference the core rules by number instead of repeating them.
 - One honest difference. In a coding agent, antislop arrives as a skill, which is an instruction the agent is built to follow. In a chat app it arrives as reference material the AI is meant to follow. It is context, not a gate, and no chat app runs the Delivery Gate for you. The rules still do real work on tone and structure, but nothing enforces them.
 - Do not try to install it from a terminal on a phone. Android has Termux and it can run Node, but it is officially experimental. On iOS there is no supported way at all.
@@ -622,6 +623,18 @@ Nothing notifies you that a new version is out. Two places always carry the curr
 
 To find out what you have, open the installed `antislop` folder and read its `VERSION` file, which names the release it came from. Or ask your agent "which antislop version is installed?" and it reads the file for you. A folder with no `VERSION` file predates that file, so it is old enough to update without checking anything else. The installer route can skip this entirely, because it prints both versions itself.
 
+### Usage modes
+
+antislop runs one of two ways, and by default the agent asks which at the start of every session. **During** guides the work as it is built and closes with the Delivery Gate report. **After** audits work you already have and lists what to fix.
+
+To stop that question, save a preference once:
+
+```bash
+npx antislop-ai --mode during
+```
+
+`after` saves the other mode, `ask` restores the question in every session, and `--mode` on its own prints the setting. The preference is shared, so one command covers every agent and every project. It lives in `~/.config/antislop/settings.json` on Linux and macOS and in `%APPDATA%\antislop\settings.json` on Windows. A mode you ask for in the current chat still wins for that session and never changes the saved one. If your agent can write files, asking it to remember a mode works too.
+
 ### Where each agent reads antislop from
 
 The installer writes into the folder your agent reads. This is what it writes and where:
@@ -657,15 +670,15 @@ Copilot, OpenCode, Kimi Code, and Pi read that home-level folder too, so a globa
 
 Antigravity, Copilot, Kimi Code, and Amp all read `.agents/skills/`. Copilot also reads `.github/skills/` and `.claude/skills/`, and Kimi Code also reads `.kimi-code/skills/`, but there is no reason to write a second copy, so picking them together installs once.
 
-Cline is the exception to the pattern: its own folder is `.cline/skills/`, and it reads `.claude/skills/` beside it, so there is a real second copy to worry about. Amp and Pi sit in both groups, because each shares the folder above and also reads a second one.
+Cline is the exception to the pattern: its own folder is `.cline/skills/`, and it reads `.claude/skills/` beside it, so there is a real second copy to worry about. Amp sits in both groups, because it shares the folder above and also reads `.claude/skills/`. Pi belongs to the second group only: its own folder is `.pi/skills/`, and it reads `.agents/skills/` beside it.
 
-#### Six agents read more than one folder, and that is a problem
+#### Seven agents read more than one folder, and that is a problem
 
-OpenCode loads skills from `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/`, and its documentation asks that skill names be unique across every location while never saying which copy wins if they are not. Codex walks `.agents/skills/` up from the working directory, Hermes reads both `.hermes/skills/` and `.agents/skills/`, Cline and Amp each load `.claude/skills/` beside their own folder, and Pi loads `.agents/skills/` beside its own.
+OpenCode loads skills from `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/`, and its documentation asks that skill names be unique across every location while never saying which copy wins if they are not. Codex walks `.agents/skills/` up from the working directory, Hermes reads both `.hermes/skills/` and `.agents/skills/`, Cline and Amp each load `.claude/skills/` beside their own folder, Copilot loads `.claude/skills/` beside the shared `.agents/skills/`, and Pi loads `.agents/skills/` beside its own.
 
-So a collision takes two selections: OpenCode, Cline, or Amp beside Claude Code, or Codex, Hermes, or Pi beside any of Antigravity, Copilot, Kimi Code, or Amp, or OpenCode beside any of those. The same skill names then land in two folders that one agent reads. The installer names that when it happens, and the fix is to remove the copy you do not need, usually the `.opencode/skills/` one, since OpenCode reads the other folder by its own documentation.
+So a collision takes two selections: OpenCode, Cline, Amp, or Copilot beside Claude Code, or Codex, Hermes, or Pi beside any of Antigravity, Copilot, Kimi Code, or Amp, or OpenCode beside any of those. The same skill names then land in two folders that one agent reads. The installer names that when it happens, and the fix is to remove the copy you do not need, usually the `.opencode/skills/` one, since OpenCode reads the other folder by its own documentation.
 
-Two of the six also resolve a collision that comes from scope rather than from two folders, and they resolve it the unusual way round: Cline and Amp both let a global skill outrank a project skill of the same name, so a stale global install silently wins over a fresh project one. Their own documentation is the source for that. Pi settles a collision of its own, in the opposite direction: project `.pi/skills/` outranks both the shared `.agents/skills/` and the user-level `~/.pi/agent/skills/`, which its own loader was read for. The other agents here do not settle it.
+Two of the seven also resolve a collision that comes from scope rather than from two folders, and they resolve it the unusual way round: Cline and Amp both let a global skill outrank a project skill of the same name, so a stale global install silently wins over a fresh project one. Their own documentation is the source for that. Pi settles a collision of its own, in the opposite direction: project `.pi/skills/` outranks both the shared `.agents/skills/` and the user-level `~/.pi/agent/skills/`, which its own loader was read for. The other agents here do not settle it.
 
 #### The pointer file each agent reads
 

@@ -60,6 +60,7 @@ Up to v3.0.0 each +0.1 shipped exactly one new skill, which kept the filter pull
 | v3.2.17 | Pi installer target and package door, verified on a real install rather than on documentation. The package is read from a `pi` key in the root `package.json`. |
 | v3.2.18 | Oh My Pi plugin door, also verified on a real install. The catalog is documented and the manifest was not, so `.omp-plugin/` ships only the catalog. |
 | v3.2.19 | The community files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, the issue templates, and a pull request template), a README and a guide read end to end for the first time since v3.0.0, and a skill catalogue generated into the guide. |
+| v3.2.20 | Usage modes become a saved preference, opt-in and announced with its source, with a session choice still winning. From community PR #29. |
 
 ## What's next
 
@@ -73,7 +74,7 @@ Every door is verified against the vendor's current documentation before its ver
 
 | Version | Item | What it means |
 |---------|------|---------------|
-| v3.2.20 | Maintenance | A macOS probe, because none of the door probes above ran on it, so a report from that platform can be split into what the installer got wrong and what the agent's own configuration explains. No new agent: a `windows-latest` CI job, because CI runs on Linux alone while this repository is developed on Windows, plus a re-check of the plugin-door probes against real installs and probes for the three doors the installer still cannot see (Kimi Code, Cline, and Oh My Pi), so the notice that follows an install names all seven rather than four. |
+| v3.2.21 | Maintenance | A macOS probe, because none of the door probes above ran on it, so a report from that platform can be split into what the installer got wrong and what the agent's own configuration explains. No new agent: a `windows-latest` CI job, because CI runs on Linux alone while this repository is developed on Windows, plus a re-check of the plugin-door probes against real installs and probes for the three doors the installer still cannot see (Kimi Code, Cline, and Oh My Pi), so the notice that follows an install names all seven rather than four. |
 
 Beyond the numbered plan, with no promised version:
 

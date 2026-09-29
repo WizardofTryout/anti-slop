@@ -54,7 +54,9 @@ assert.throws(() => configureMode(['during', 'extra'], settingsFile), /Usage:/)
 assert.equal(readSettings(settingsFile).mode, 'after')
 for (const content of ['{broken', 'null', '[]', '"during"']) {
   fs.writeFileSync(settingsFile, content)
-  assert.throws(() => configureMode(['during'], settingsFile))
+  // The refusal is right, but it has to name the way out: --mode is the only command
+  // that can fix this file, so a message with no instruction is a dead end.
+  assert.throws(() => configureMode(['during'], settingsFile), /Fix or delete/)
   assert.equal(fs.readFileSync(settingsFile, 'utf8'), content)
 }
 for (const mode of ['invalid', null, 1]) {
@@ -198,6 +200,8 @@ check('E one folder alone is not a duplicate', detectDuplicateReads({ targets: r
 check('E cline duplicate read named', detectDuplicateReads({ targets: resolveTargets('project', ['claude', 'cline']), location: 'project' }).map((d) => [d.agent.id, d.paths.length]), [['cline', 2]])
 // Amp loads .claude/skills beside the shared folder, so Claude Code plus Amp collides too.
 check('E amp duplicate read named', detectDuplicateReads({ targets: resolveTargets('project', ['claude', 'amp']), location: 'project' }).map((d) => [d.agent.id, d.paths.length]), [['amp', 2]])
+// Copilot reads .claude/skills beside the shared folder, so Claude Code plus Copilot collides.
+check('E copilot duplicate read named', detectDuplicateReads({ targets: resolveTargets('project', ['claude', 'copilot']), location: 'project' }).map((d) => [d.agent.id, d.paths.length]), [['copilot', 2]])
 check('E global scope is not checked', detectDuplicateReads({ targets: resolveTargets('global', ['claude', 'opencode']), location: 'global' }), [])
 
 // Codex's global scope is the shared folder, not ~/.codex/skills, which Codex calls deprecated.
