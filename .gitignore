@@ -1,6 +1,13 @@
 # Internal audit/review documents (not published to the repo)
 docs/
 issue/
+How-to-anti-slop.md
+*.transcript*
+*transcript*.jsonl
+conversations/
+chats/
+personal/
+private/
 
 # Python bytecode, written whenever the contrast checker runs
 __pycache__/
